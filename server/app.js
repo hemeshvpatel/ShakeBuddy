@@ -2,6 +2,7 @@ const express = require(`express`) // import express
 const bodyParser = require(`body-parser`) // import body-parser 
 const graphqlHttp = require('express-graphql') // import graphql to use as middleware
 const schema = require('./schema/schema')
+const mongoose = require('mongoose');
 
 const app = express() // create express server
 

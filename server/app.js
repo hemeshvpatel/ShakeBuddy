@@ -1,15 +1,37 @@
 const express = require(`express`) // import express 
 const bodyParser = require(`body-parser`) // import body-parser 
 const graphqlHttp = require('express-graphql') // import graphql to use as middleware
-const schema = require('./schema/schema')
+const { buildSchema } = require('graphql') // import the function to build our schema
 const mongoose = require('mongoose');
 
 const app = express() // create express server
 
 app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
 
-app.use('graphql', graphqlHttp({
-    schema,
+app.use('/graphql', graphqlHttp({
+    schema: buildSchema(`
+        type shakeQuery {
+            shakes: [String!]!
+        }
+        
+        type shakeMutation {
+            createShake(text: String): String
+        }
+
+        schema {
+            query: shakeQuery
+            mutation: shakeMutation
+        }
+    `),
+    rootValue: {
+        shakes: () => {
+            return ['Berry', 'Strawberry']
+        },
+        createShake: (args) => {
+            const shakeText = args.text 
+            return shakeText
+        }
+    },
     graphiql: true
 }))
 

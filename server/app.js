@@ -6,16 +6,31 @@ const mongoose = require('mongoose');
 
 const app = express() // create express server
 
+const shakes = []
+
 app.use(bodyParser.json()) // use body-parser middleware to parse incoming json
 
 app.use('/graphql', graphqlHttp({
     schema: buildSchema(`
+        type Shake {
+            _id: Int
+            name: String
+            description: String
+            creator: String
+        }
+
+        input ShakeInput {
+            name: String
+            description: String
+            creator: String
+        }
+
         type shakeQuery {
-            shakes: [String!]!
+            shakes: [Shake]
         }
         
         type shakeMutation {
-            createShake(text: String): String
+            createShake(shakeInput: ShakeInput): Shake
         }
 
         schema {
@@ -25,11 +40,23 @@ app.use('/graphql', graphqlHttp({
     `),
     rootValue: {
         shakes: () => {
-            return ['Berry', 'Strawberry']
+            return shakes
         },
         createShake: (args) => {
-            const shakeText = args.text 
-            return shakeText
+            // const shakeText = args.text 
+            // return shakeText
+
+            console.log(args.shakeInput)
+            
+            const shake = {
+                _id: 1234,
+                name: args.shakeInput.name,
+                description: args.shakeInput.description,
+                creator: args.shakeInput.creator 
+            }
+
+            shakes.push(shake);
+            return shakes;
         }
     },
     graphiql: true

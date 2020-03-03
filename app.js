@@ -2,6 +2,7 @@ const express = require("express");
 const bodyparser = require("body-parser");
 const graphqlHttp = require("express-graphql");
 const { buildSchema } = require("graphql");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -62,14 +63,24 @@ app.use(
           protein: args.ingredientInput.protein,
           fat: args.ingredientInput.fat,
           imageUrl: args.ingredientInput.imageUrl
-        }
+        };
         console.log(args);
         ingredients.push(ingredient);
-        return ingredient
+        return ingredient;
       }
     },
     graphiql: true
   })
 );
 
-app.listen(3000);
+//mongoose connection
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0-2edcx.mongodb.net/test?retryWrites=true&w=majority`
+  )
+  .then(() => {
+    app.listen(3000);
+  })
+  .catch(err => {
+    console.log(err);
+  });

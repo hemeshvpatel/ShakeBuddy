@@ -55,7 +55,15 @@ app.use(
     `),
     rootValue: {
       ingredients: () => {
-        return ingredients;
+        return Ingredient.find().then(ingredients => {
+          return ingredients.map(ingredient => {
+            return {
+              ...ingredient._doc
+            }
+          })
+        }).catch(err => {
+          throw err
+        })
       },
       createIngredient: args => {
         //temporary object creation without MongoDB

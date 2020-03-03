@@ -1,6 +1,7 @@
 {
-  "env": {
-    "MONGO_USER": "shakebuddy",
-    "MONGO_PASSWORD": "shakebuddy"
-  }
+    "env": {
+        "MONGO_USER": "shakebuddy",
+        "MONGO_PASSWORD": "shakebuddy",
+        "MONGO_DB": "shakebuddy"
+    }
 }

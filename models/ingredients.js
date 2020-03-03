@@ -12,7 +12,7 @@ const ingredientSchema = new Schema({
         required: true
     },
     servingSizeUnit: {
-        type: Number,
+        type: String,
         required: true
     },
     carb: {

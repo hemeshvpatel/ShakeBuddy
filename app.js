@@ -97,16 +97,26 @@ app.use(
           carb: args.ingredientInput.carb,
           protein: args.ingredientInput.protein,
           fat: args.ingredientInput.fat,
-          imageUrl: args.ingredientInput.imageUrl
+          imageUrl: args.ingredientInput.imageUrl,
+          creator: "5e600bbf3a4da0468fab3787"
         });
         //ingredients.push(ingredient);
+        let createdIngredient;
         return ingredient
           .save()
           .then(result => {
-            console.log(result);
-            return {
-              ...result._doc
-            };
+            createdIngredient = { ...result._doc };
+            return User.findById("5e600bbf3a4da0468fab3787");
+          })
+          .then(user => {
+            if (!user) {
+              throw new Error("Username already exists.");
+            }
+            user.createdIngredients.push(ingredient);
+            return user.save();
+          })
+          .then(result => {
+            return createdIngredient;
           })
           .catch(err => {
             console.log(err);
@@ -114,8 +124,13 @@ app.use(
           });
       },
       createUser: args => {
-        return bcrypt
-          .hash(args.userInput.password, 12)
+        return User.findOne({ username: args.userInput.username })
+          .then(user => {
+            if (user) {
+              throw new Error("Username already exists.");
+            }
+            return bcrypt.hash(args.userInput.password, 12);
+          })
           .then(hashedPassword => {
             const user = new User({
               username: args.userInput.username,
@@ -124,7 +139,7 @@ app.use(
             return user.save();
           })
           .then(result => {
-            return { ...result._doc, _id: result.id };
+            return { ...result._doc, password: null, _id: result.id };
           })
           .catch(err => {
             throw err;

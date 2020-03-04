@@ -1,17 +1,17 @@
 const express = require("express");
 const bodyparser = require("body-parser");
 const graphqlHttp = require("express-graphql");
-const {
-  buildSchema
-} = require("graphql");
+const { buildSchema } = require("graphql");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const Ingredient = require('./models/ingredients')
+const Ingredient = require("./models/ingredients");
+const User = require("./models/user");
 
 const app = express();
 
 // Temporary data
-const ingredients = [];
+//const ingredients = [];
 
 app.use(bodyparser.json());
 
@@ -30,6 +30,12 @@ app.use(
           imageUrl: String!
         }
 
+        type User {
+          _id: ID!
+          username: String!
+          password: String
+        }
+
         input IngredientInput {
           name: String!
           servingSizeAmount: Int!
@@ -40,12 +46,18 @@ app.use(
           imageUrl: String!
         }
 
+        input UserInput {
+          username: String!
+          password: String!
+        }
+
         type RootQuery {
             ingredients: [Ingredient!]!
         }
 
         type RootMutation{
             createIngredient(ingredientInput: IngredientInput): Ingredient
+            createUser(userInput: UserInput): User
         }
 
         schema {
@@ -55,15 +67,17 @@ app.use(
     `),
     rootValue: {
       ingredients: () => {
-        return Ingredient.find().then(ingredients => {
-          return ingredients.map(ingredient => {
-            return {
-              ...ingredient._doc
-            }
+        return Ingredient.find()
+          .then(ingredients => {
+            return ingredients.map(ingredient => {
+              return {
+                ...ingredient._doc
+              };
+            });
           })
-        }).catch(err => {
-          throw err
-        })
+          .catch(err => {
+            throw err;
+          });
       },
       createIngredient: args => {
         //temporary object creation without MongoDB
@@ -83,18 +97,53 @@ app.use(
           carb: args.ingredientInput.carb,
           protein: args.ingredientInput.protein,
           fat: args.ingredientInput.fat,
-          imageUrl: args.ingredientInput.imageUrl
-        })
-        //ingredients.push(ingredient);
-        return ingredient.save().then(result => {
-          console.log(result)
-          return {
-            ...result._doc
-          }
-        }).catch(err => {
-          console.log(err)
-          throw err
+          imageUrl: args.ingredientInput.imageUrl,
+          creator: "5e600bbf3a4da0468fab3787"
         });
+        //ingredients.push(ingredient);
+        let createdIngredient;
+        return ingredient
+          .save()
+          .then(result => {
+            createdIngredient = { ...result._doc };
+            return User.findById("5e600bbf3a4da0468fab3787");
+          })
+          .then(user => {
+            if (!user) {
+              throw new Error("Username already exists.");
+            }
+            user.createdIngredients.push(ingredient);
+            return user.save();
+          })
+          .then(result => {
+            return createdIngredient;
+          })
+          .catch(err => {
+            console.log(err);
+            throw err;
+          });
+      },
+      createUser: args => {
+        return User.findOne({ username: args.userInput.username })
+          .then(user => {
+            if (user) {
+              throw new Error("Username already exists.");
+            }
+            return bcrypt.hash(args.userInput.password, 12);
+          })
+          .then(hashedPassword => {
+            const user = new User({
+              username: args.userInput.username,
+              password: hashedPassword
+            });
+            return user.save();
+          })
+          .then(result => {
+            return { ...result._doc, password: null, _id: result.id };
+          })
+          .catch(err => {
+            throw err;
+          });
       }
     },
     graphiql: true

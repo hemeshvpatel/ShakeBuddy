@@ -33,6 +33,10 @@ const ingredientSchema = new Schema({
     imageUrl: {
         type: String,
         required: true
+    },
+    creator: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
     }
 });
 

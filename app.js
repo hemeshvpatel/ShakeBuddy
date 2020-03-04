@@ -15,6 +15,28 @@ const app = express();
 
 app.use(bodyparser.json());
 
+const ingredients = ingredientIds => {
+  return Ingredient.find({_id: {$in: ingredientIds}})
+  .then(ingredients => {
+    return ingredients.map(ingredient => {
+      return { ...ingredient._doc, _id: ingredient.id, creator: user.bind(this, ingredient.creator)}
+    })
+  })
+  .catch(err => {
+    throw err;
+  });
+}
+
+const user = userId => {
+  return User.findById(userId)
+  .then(user => {
+    return {...user._doc, _id: user.id, createdIngredients: ingredients.bind(this, user._doc.createdIngredients)}
+  })
+  .catch(err => {
+    throw err
+  })
+}
+
 app.use(
   "/graphql",
   graphqlHttp({
@@ -28,12 +50,14 @@ app.use(
           protein: Int!
           fat: Int!
           imageUrl: String!
+          creator: User!
         }
 
         type User {
           _id: ID!
           username: String!
           password: String
+          createdIngredients: [Ingredient!]
         }
 
         input IngredientInput {
@@ -68,10 +92,13 @@ app.use(
     rootValue: {
       ingredients: () => {
         return Ingredient.find()
+          // .populate('creator')
           .then(ingredients => {
             return ingredients.map(ingredient => {
               return {
-                ...ingredient._doc
+                ...ingredient._doc,
+                _id: ingredient.id,
+                creator: user.bind(this, ingredient._doc.creator)
               };
             });
           })

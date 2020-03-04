@@ -7,11 +7,12 @@ const {
 const mongoose = require("mongoose");
 
 const Ingredient = require('./models/ingredients')
+const User = require('./models/user')
 
 const app = express();
 
 // Temporary data
-const ingredients = [];
+//const ingredients = [];
 
 app.use(bodyparser.json());
 
@@ -30,6 +31,12 @@ app.use(
           imageUrl: String!
         }
 
+        type User {
+          _id: ID!
+          username: String!
+          password: String
+        }
+
         input IngredientInput {
           name: String!
           servingSizeAmount: Int!
@@ -40,12 +47,18 @@ app.use(
           imageUrl: String!
         }
 
+        input UserInput {
+          username: String!
+          password: String!
+        }
+
         type RootQuery {
             ingredients: [Ingredient!]!
         }
 
         type RootMutation{
             createIngredient(ingredientInput: IngredientInput): Ingredient
+            createUser(userInput: UserInput): User
         }
 
         schema {

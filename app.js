@@ -1,13 +1,12 @@
 const express = require("express");
 const bodyparser = require("body-parser");
 const graphqlHttp = require("express-graphql");
-const {
-  buildSchema
-} = require("graphql");
+const { buildSchema } = require("graphql");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const Ingredient = require('./models/ingredients')
-const User = require('./models/user')
+const Ingredient = require("./models/ingredients");
+const User = require("./models/user");
 
 const app = express();
 
@@ -68,15 +67,17 @@ app.use(
     `),
     rootValue: {
       ingredients: () => {
-        return Ingredient.find().then(ingredients => {
-          return ingredients.map(ingredient => {
-            return {
-              ...ingredient._doc
-            }
+        return Ingredient.find()
+          .then(ingredients => {
+            return ingredients.map(ingredient => {
+              return {
+                ...ingredient._doc
+              };
+            });
           })
-        }).catch(err => {
-          throw err
-        })
+          .catch(err => {
+            throw err;
+          });
       },
       createIngredient: args => {
         //temporary object creation without MongoDB
@@ -97,17 +98,37 @@ app.use(
           protein: args.ingredientInput.protein,
           fat: args.ingredientInput.fat,
           imageUrl: args.ingredientInput.imageUrl
-        })
-        //ingredients.push(ingredient);
-        return ingredient.save().then(result => {
-          console.log(result)
-          return {
-            ...result._doc
-          }
-        }).catch(err => {
-          console.log(err)
-          throw err
         });
+        //ingredients.push(ingredient);
+        return ingredient
+          .save()
+          .then(result => {
+            console.log(result);
+            return {
+              ...result._doc
+            };
+          })
+          .catch(err => {
+            console.log(err);
+            throw err;
+          });
+      },
+      createUser: args => {
+        return bcrypt
+          .hash(args.userInput.password, 12)
+          .then(hashedPassword => {
+            const user = new User({
+              username: args.userInput.username,
+              password: hashedPassword
+            });
+            return user.save();
+          })
+          .then(result => {
+            return { ...result._doc, _id: result.id };
+          })
+          .catch(err => {
+            throw err;
+          });
       }
     },
     graphiql: true
